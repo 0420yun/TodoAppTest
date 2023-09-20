@@ -31,6 +31,8 @@ class ViewController: UIViewController {
         editButton = UIBarButtonItem(title: "편집", style: .plain, target: self, action: #selector(tapEditButton(_:)))
         doneButton = UIBarButtonItem(title: "완료", style: .plain, target: self, action: #selector(doneButtonTap))
         navigationItem.leftBarButtonItem = editButton
+        let longPressGesture = UILongPressGestureRecognizer(target: self, action: #selector(handleLongPress(_:)))
+        tableView.addGestureRecognizer(longPressGesture)
         
         tableView.register(UITableViewCell.self, forCellReuseIdentifier: "Cell")
 
@@ -65,6 +67,37 @@ class ViewController: UIViewController {
             textField.placeholder = "할 일을 입력해주세요." })
         
         self.present(alert, animated: true, completion: nil)
+    }
+    
+    @objc func handleLongPress(_ gestureRecognizer: UILongPressGestureRecognizer) {
+        if gestureRecognizer.state == .began {
+            let touchPoint = gestureRecognizer.location(in: tableView)
+            if let indexPath = tableView.indexPathForRow(at: touchPoint) {
+                // 여기서 alert를 보여줍니다.
+                let task = self.tasks[indexPath.row]
+                
+                let alert = UIAlertController(title: "할 일 변경", message: "변경할 내용을 입력해주세요.", preferredStyle: .alert)
+                
+                let changeButton = UIAlertAction(title: "변경", style: .default, handler: { [weak self] _ in
+                    guard let title = alert.textFields?[0].text else { return }
+                    var taskToUpdate = self?.tasks[indexPath.row]
+                    taskToUpdate?.title = title
+                    self?.tasks[indexPath.row] = taskToUpdate!
+                    self?.tableView.reloadData()
+                })
+                
+                let cancelButton = UIAlertAction(title: "취소", style:.cancel, handler:nil)
+                
+                alert.addAction(cancelButton)
+                alert.addAction(changeButton)
+                
+                // 할 일의 제목으로 초기값 설정
+                alert.addTextField(configurationHandler:{(textField) in
+                    textField.text=task.title})
+                
+                present(alert, animated:true, completion:nil)
+            }
+        }
     }
     
     func saveTasks() {
